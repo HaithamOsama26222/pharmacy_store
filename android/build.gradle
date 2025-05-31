@@ -1,0 +1,36 @@
+// build.gradle (داخل مجلد android)
+
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:7.4.2'
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+        maven {
+            // Flutter packages are published to this repository.
+            url "$rootDir/flutter/.pub-cache/hosted/pub.dartlang.org"
+        }
+    }
+}
+
+rootProject.buildDir = "../build"
+subprojects { subproject ->
+    if (!subproject.projectDir.getPath().contains("pub-cache")) {
+        subproject.buildDir = "${rootProject.buildDir}/${subproject.name}"
+    }
+}
+subprojects {
+    project.evaluationDependsOn(":app")
+}
+
+tasks.register("clean", Delete) {
+    delete rootProject.buildDir
+}
