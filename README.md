@@ -52,3 +52,7 @@ main.dart
 ```bash
 flutter pub get
 flutter run
+=======
+# pharmacy_store
+ A modern Flutter-based mobile application for managing pharmacy inventory, sales, and product tracking — fully connected to a backend API (ASP.NET Core) and SQL Server database.
+ 830ab1d23aedf0c1f3deb9cba144189ac02774a2
