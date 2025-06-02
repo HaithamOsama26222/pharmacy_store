@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'screens/login_screen.dart'; // هنا يتم استيراد الكلاس
+import 'package:pharmacy_store/screens/splash_screen.dart'; // ✅ استيراد SplashScreen
 
 void main() {
   runApp(const PharmacyStoreApp());
@@ -13,10 +13,11 @@ class PharmacyStoreApp extends StatelessWidget {
     return MaterialApp(
       title: 'Pharmacy Store',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(primarySwatch: Colors.teal),
-      home: const LoginScreen(), // 🔥 هنا يتم استخدام الكلاس فعليًا
+      theme: ThemeData(
+        primarySwatch: Colors.teal,
+        fontFamily: 'Cairo', // أو الخط الافتراضي إذا لم تستخدم GoogleFonts
+      ),
+      home: const SplashScreen(), // ✅ أول شاشة عند تشغيل التطبيق
     );
   }
 }
-
-

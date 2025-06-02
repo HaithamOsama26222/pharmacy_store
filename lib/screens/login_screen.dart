@@ -1,15 +1,52 @@
 import 'package:flutter/material.dart';
 import 'package:pharmacy_store/screens/home_screen.dart';
-import 'package:pharmacy_store/services/auth_service.dart';
+import 'package:pharmacy_store/services/auth_service.dart'; // تأكد أن اسم الملف auth_service.dart
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final usernameController = TextEditingController();
-    final passwordController = TextEditingController();
+  State<LoginScreen> createState() => _LoginScreenState();
+}
 
+class _LoginScreenState extends State<LoginScreen> {
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+  bool isLoading = false;
+
+  void _login() async {
+    final email = emailController.text.trim();
+    final password = passwordController.text;
+
+    if (email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('يرجى إدخال البريد وكلمة المرور')),
+      );
+      return;
+    }
+
+    setState(() => isLoading = true);
+
+    final result = await AuthService.login(email, password);
+
+    setState(() => isLoading = false);
+
+    if (!mounted) return;
+
+    if (result['success']) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const HomeScreen()),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(result['message'] ?? 'فشل تسجيل الدخول')),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       body: Center(
@@ -21,16 +58,16 @@ class LoginScreen extends StatelessWidget {
               const Icon(Icons.local_pharmacy, size: 100, color: Colors.teal),
               const SizedBox(height: 20),
               const Text(
-                "تسجيل الدخول",
+                "تسجيل الدخول للعميل",
                 style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 24),
               TextField(
-                controller: usernameController,
+                controller: emailController,
                 decoration: const InputDecoration(
-                  labelText: 'اسم المستخدم',
+                  labelText: 'البريد الإلكتروني',
                   border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.person),
+                  prefixIcon: Icon(Icons.email),
                 ),
               ),
               const SizedBox(height: 16),
@@ -44,45 +81,16 @@ class LoginScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 24),
-              ElevatedButton.icon(
-                  icon: const Icon(Icons.login),
-                  label: const Text("دخول"),
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: const Size(double.infinity, 50),
-                  ),
-                  onPressed: () async {
-                    final username = usernameController.text.trim();
-                    final password = passwordController.text;
-
-                    if (username.isEmpty || password.isEmpty) {
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content:
-                                  Text('يرجى إدخال اسم المستخدم وكلمة المرور')),
-                        );
-                      }
-                      return;
-                    }
-
-                    final result = await AuthService.login(username, password);
-
-                    if (!context.mounted) return; // ✅ تحقق بعد await
-
-                    if (result['success']) {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const HomeScreen()),
-                      );
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                            content:
-                                Text(result['message'] ?? 'فشل تسجيل الدخول')),
-                      );
-                    }
-                  }),
+              isLoading
+                  ? const CircularProgressIndicator()
+                  : ElevatedButton.icon(
+                      icon: const Icon(Icons.login),
+                      label: const Text("دخول"),
+                      style: ElevatedButton.styleFrom(
+                        minimumSize: const Size(double.infinity, 50),
+                      ),
+                      onPressed: _login,
+                    ),
             ],
           ),
         ),

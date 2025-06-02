@@ -15,6 +15,8 @@ class CartScreen extends StatefulWidget {
 }
 
 class _CartScreenState extends State<CartScreen> {
+  String selectedPaymentMethod = 'الدفع عند الاستلام';
+
   double get totalPrice {
     return widget.cartItems.fold(0, (sum, item) {
       return sum + (item.product.salePrice ?? 0) * item.quantity;
@@ -22,7 +24,10 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   Future<void> submitSale() async {
-    final sale = SaleRequest(widget.cartItems);
+    print("\u{1F4E6} بدأ إرسال الطلب...");
+
+    final sale =
+        SaleRequest(widget.cartItems, paymentMethod: selectedPaymentMethod);
     final url = Uri.parse('http://10.0.2.2:5176/api/sales');
 
     try {
@@ -35,23 +40,35 @@ class _CartScreenState extends State<CartScreen> {
       if (!mounted) return;
 
       if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final orderId = data['saleID'] ?? 0;
+
+        print("\u2705 تم إرسال الطلب بنجاح. رقم الطلب: $orderId");
+
         setState(() {
           widget.cartItems.clear();
         });
 
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => const OrderSuccessScreen()),
+          MaterialPageRoute(
+            builder: (_) => OrderSuccessScreen(
+              orderId: orderId,
+              paymentMethod: selectedPaymentMethod,
+            ),
+          ),
         );
       } else {
+        print("\u274C فشل إرسال الطلب: ${response.statusCode}");
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("❌ فشل: ${response.statusCode}")),
+          SnackBar(content: Text("\u274C فشل: ${response.statusCode}")),
         );
       }
     } catch (e) {
       if (!mounted) return;
+      print("\u26A0\uFE0F خطأ أثناء الإرسال: $e");
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("⚠️ خطأ أثناء الإرسال: $e")),
+        SnackBar(content: Text("\u26A0\uFE0F خطأ أثناء الإرسال: $e")),
       );
     }
   }
@@ -90,7 +107,54 @@ class _CartScreenState extends State<CartScreen> {
                 Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      const Text(
+                        "اختر وسيلة الدفع:",
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                      RadioListTile(
+                        title: const Text('الدفع عند الاستلام'),
+                        value: 'الدفع عند الاستلام',
+                        groupValue: selectedPaymentMethod,
+                        onChanged: (value) {
+                          setState(() {
+                            selectedPaymentMethod = value!;
+                          });
+                        },
+                      ),
+                      RadioListTile(
+                        title: const Text('بطاقة فيزا / ماستركارد'),
+                        value: 'بطاقة فيزا / ماستركارد',
+                        groupValue: selectedPaymentMethod,
+                        onChanged: (value) {
+                          setState(() {
+                            selectedPaymentMethod = value!;
+                          });
+                        },
+                      ),
+                      RadioListTile(
+                        title: const Text('مدى'),
+                        value: 'مدى',
+                        groupValue: selectedPaymentMethod,
+                        onChanged: (value) {
+                          setState(() {
+                            selectedPaymentMethod = value!;
+                          });
+                        },
+                      ),
+                      RadioListTile(
+                        title: const Text('STC PAY'),
+                        value: 'STC PAY',
+                        groupValue: selectedPaymentMethod,
+                        onChanged: (value) {
+                          setState(() {
+                            selectedPaymentMethod = value!;
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 16),
                       Text(
                         "الإجمالي: ${totalPrice.toStringAsFixed(2)} ر.س",
                         style: const TextStyle(

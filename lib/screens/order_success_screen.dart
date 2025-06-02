@@ -2,7 +2,14 @@ import 'package:flutter/material.dart';
 import 'dashboard_screen.dart'; // أو الشاشة الرئيسية المناسبة لك
 
 class OrderSuccessScreen extends StatelessWidget {
-  const OrderSuccessScreen({super.key});
+  final int orderId;
+  final String paymentMethod;
+
+  const OrderSuccessScreen({
+    super.key,
+    required this.orderId,
+    required this.paymentMethod,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -17,6 +24,16 @@ class OrderSuccessScreen extends StatelessWidget {
             const Text(
               "✅ تم تنفيذ الطلب بنجاح",
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              "رقم الطلب: $orderId",
+              style: const TextStyle(fontSize: 18),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              "طريقة الدفع: $paymentMethod",
+              style: const TextStyle(fontSize: 18),
             ),
             const SizedBox(height: 30),
             ElevatedButton(
