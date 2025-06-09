@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:logger/logger.dart';
 
 import '../models/cart_item.dart';
 import '../models/sale_request.dart';
 import 'order_success_screen.dart';
+
+final logger = Logger();
 
 class CartScreen extends StatefulWidget {
   final List<CartItem> cartItems;
@@ -24,7 +27,7 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   Future<void> submitSale() async {
-    print("\u{1F4E6} بدأ إرسال الطلب...");
+    logger.i("📦 بدأ إرسال الطلب...");
 
     final sale =
         SaleRequest(widget.cartItems, paymentMethod: selectedPaymentMethod);
@@ -43,7 +46,7 @@ class _CartScreenState extends State<CartScreen> {
         final data = jsonDecode(response.body);
         final orderId = data['saleID'] ?? 0;
 
-        print("\u2705 تم إرسال الطلب بنجاح. رقم الطلب: $orderId");
+        logger.i("✅ تم إرسال الطلب بنجاح. رقم الطلب: $orderId");
 
         setState(() {
           widget.cartItems.clear();
@@ -59,16 +62,16 @@ class _CartScreenState extends State<CartScreen> {
           ),
         );
       } else {
-        print("\u274C فشل إرسال الطلب: ${response.statusCode}");
+        logger.e("❌ فشل إرسال الطلب: ${response.statusCode}");
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("\u274C فشل: ${response.statusCode}")),
+          SnackBar(content: Text("❌ فشل: ${response.statusCode}")),
         );
       }
     } catch (e) {
       if (!mounted) return;
-      print("\u26A0\uFE0F خطأ أثناء الإرسال: $e");
+      logger.e("⚠️ خطأ أثناء الإرسال: $e");
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("\u26A0\uFE0F خطأ أثناء الإرسال: $e")),
+        SnackBar(content: Text("⚠️ خطأ أثناء الإرسال: $e")),
       );
     }
   }
@@ -112,7 +115,9 @@ class _CartScreenState extends State<CartScreen> {
                       const Text(
                         "اختر وسيلة الدفع:",
                         style: TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold),
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       RadioListTile(
                         title: const Text('الدفع عند الاستلام'),

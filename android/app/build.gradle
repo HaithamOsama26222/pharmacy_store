@@ -1,3 +1,5 @@
+import java.util.Properties
+import java.io.FileInputStream
 plugins {
     id "com.android.application"
     id "kotlin-android"
@@ -16,29 +18,10 @@ if (keystorePropertiesFile.exists()) {
     println("❌ key.properties not found!")
 }
 
-// تحميل local.properties
-def localProperties = new Properties()
-def localPropertiesFile = rootProject.file("local.properties")
-if (localPropertiesFile.exists()) {
-    localPropertiesFile.withReader("UTF-8") { reader ->
-        localProperties.load(reader)
-    }
-}
-
-def flutterVersionCode = localProperties.getProperty("flutter.versionCode")
-if (flutterVersionCode == null) {
-    flutterVersionCode = "1"
-}
-
-def flutterVersionName = localProperties.getProperty("flutter.versionName")
-if (flutterVersionName == null) {
-    flutterVersionName = "1.0"
-}
-
 android {
     namespace = "com.haitham.pharmacy_store"
-    compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    compileSdk = 34
+    ndkVersion = "25.2.9519653"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
@@ -47,13 +30,12 @@ android {
 
     defaultConfig {
         applicationId = "com.haitham.pharmacy_store"
-        minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
-        versionCode = flutterVersionCode.toInteger()
-        versionName = flutterVersionName
+        minSdk = 21
+        targetSdk = 34
+        versionCode = 3               // ✅ تم تحديثه لتفادي رسالة التكرار
+        versionName = "1.0.2"         // ✅ الإصدار الجديد
     }
 
-    // ✅ إعداد التوقيع
     signingConfigs {
         release {
             keyAlias keystoreProperties['keyAlias']

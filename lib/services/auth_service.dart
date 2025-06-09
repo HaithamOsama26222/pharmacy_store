@@ -3,33 +3,53 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
-  static const String baseUrl = 'http://10.0.2.2:5000/api/Auth/login';
+  static const String baseUrl = 'http://192.168.8.94:5000/api/Auth';
 
   static Future<Map<String, dynamic>> login(
       String username, String password) async {
-    final response = await http.post(
-      Uri.parse(baseUrl),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'username': username,
-        'password': password,
-      }),
-    );
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/login'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'username': username,
+          'password': password,
+        }),
+      );
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
+      print('STATUS: ${response.statusCode}');
+      print('BODY: ${response.body}');
 
-      // ✅ تخزين البيانات بعد نجاح تسجيل الدخول
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setInt("userID", data["userID"]);
-      await prefs.setString("userName", data["userName"]);
-      await prefs.setBool("isLoggedIn", true);
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
 
-      return {'success': true, 'data': data};
-    } else {
+        // ✅ تخزين البيانات بعد نجاح تسجيل الدخول (باستخدام الحقول الصحيحة)
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setInt("userID", data["userId"]);
+        await prefs.setString("userName", data["username"]);
+        await prefs.setString("role", data["role"]);
+        await prefs.setBool("isLoggedIn", true);
+
+        return {'success': true, 'data': data};
+      } else {
+        try {
+          final errorData = jsonDecode(response.body);
+          return {
+            'success': false,
+            'message': errorData['message'] ?? 'فشل تسجيل الدخول',
+          };
+        } catch (_) {
+          return {
+            'success': false,
+            'message': 'استجابة غير متوقعة من الخادم',
+          };
+        }
+      }
+    } catch (e) {
+      print('Login Exception: $e');
       return {
         'success': false,
-        'message': jsonDecode(response.body)['message'] ?? 'فشل تسجيل الدخول'
+        'message': 'حدث خطأ أثناء الاتصال بالخادم',
       };
     }
   }
@@ -47,5 +67,10 @@ class AuthService {
   static Future<String?> getUserName() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString("userName");
+  }
+
+  static Future<String?> getUserRole() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString("role");
   }
 }
