@@ -26,13 +26,34 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _logout() async {
-    await AuthService.logout();
-    if (!mounted) return;
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(builder: (context) => const LoginScreen()),
-      (route) => false,
+    final shouldLogout = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('تأكيد الخروج'),
+        content: const Text('هل أنت متأكد أنك تريد تسجيل الخروج؟'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('إلغاء'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('تأكيد'),
+          ),
+        ],
+      ),
     );
+
+    if (shouldLogout == true) {
+      await AuthService.logout();
+      if (!mounted) return;
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
+        (route) => false,
+      );
+    }
   }
 
   @override
@@ -42,7 +63,7 @@ class _HomeScreenState extends State<HomeScreen> {
         title: Text('مرحبًا ${userName ?? ""}'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout),
+            icon: const Icon(Icons.exit_to_app),
             tooltip: 'تسجيل الخروج',
             onPressed: _logout,
           ),

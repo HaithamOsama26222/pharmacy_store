@@ -2,17 +2,16 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
-class AuthService {
-  static const String baseUrl = 'http://192.168.8.94:5000/api/Auth';
+class AdminAuthService {
+  static const String baseUrl = 'http://192.168.8.94:5000/api/AdminAuth';
 
-  static Future<Map<String, dynamic>> login(
-      String email, String password) async {
+  static Future<Map<String, dynamic>> login(String username, String password) async {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/login'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
-          'email': email, // ✅ تم التعديل هنا
+          'username': username,
           'password': password,
         }),
       );
@@ -23,7 +22,6 @@ class AuthService {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
 
-        // ✅ تخزين البيانات بعد نجاح تسجيل الدخول
         final prefs = await SharedPreferences.getInstance();
         await prefs.setInt("userID", data["userId"]);
         await prefs.setString("userName", data["username"]);
@@ -33,20 +31,20 @@ class AuthService {
         return {'success': true, 'data': data};
       } else {
         try {
-          final errorData = jsonDecode(response.body);
-          return {
-            'success': false,
-            'message': errorData['message'] ?? 'فشل تسجيل الدخول',
-          };
-        } catch (_) {
-          return {
-            'success': false,
-            'message': 'استجابة غير متوقعة من الخادم',
-          };
-        }
+  final errorData = jsonDecode(response.body);
+  return {
+    'success': false,
+    'message': errorData['message'] ?? 'فشل تسجيل الدخول',
+  };
+} catch (_) {
+  return {
+    'success': false,
+    'message': 'استجابة غير متوقعة من الخادم',
+  };
+}
+
       }
     } catch (e) {
-      print('Login Exception: $e');
       return {
         'success': false,
         'message': 'حدث خطأ أثناء الاتصال بالخادم',

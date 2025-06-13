@@ -19,16 +19,18 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
   }
 
   Future<List<Map<String, dynamic>>> fetchSales() async {
-    final url = Uri.parse('http://10.0.2.2:5176/api/sales');
-    final response = await http.get(url);
+  final int customerId = 1; // ✳️ استبدله بـ ID العميل المسجّل حاليًا
+  final url = Uri.parse('http://10.0.2.2:5176/api/sales/by-customer/$customerId');
+  final response = await http.get(url);
 
-    if (response.statusCode == 200) {
-      final List<dynamic> data = json.decode(response.body);
-      return data.cast<Map<String, dynamic>>();
-    } else {
-      throw Exception('فشل تحميل سجل المبيعات');
-    }
+  if (response.statusCode == 200) {
+    final List<dynamic> data = json.decode(response.body);
+    return data.cast<Map<String, dynamic>>();
+  } else {
+    throw Exception('فشل تحميل سجل المبيعات');
   }
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -54,7 +56,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
               final sale = sales[index];
               return ListTile(
                 title: Text("رقم الطلب: ${sale['saleID']}"),
-                subtitle: Text("التاريخ: ${sale['saleDate']}"),
+                  subtitle: Text("التاريخ: ${sale['saleDate'].split('T')[0]}"),
                 trailing: Text("${sale['totalAmount']} ر.س"),
               );
             },
