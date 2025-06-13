@@ -2,8 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class CustomerAuthService {
-  static const String baseUrl =
-      'http://10.0.2.2:5176/api/customer/login'; // عدّل IP إذا لزم
+static const String baseUrl = 'http://10.0.2.2:5000/api/Auth';
 
   static Future<Map<String, dynamic>> login(
       String email, String password) async {

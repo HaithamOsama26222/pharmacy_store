@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:pharmacy_store/screens/home_screen.dart';
-import 'package:pharmacy_store/screens/login_screen.dart';
-import 'package:pharmacy_store/services/auth_service.dart';
+import 'package:pharmacy_store/screens/dashboard_screen.dart';
+import 'package:pharmacy_store/screens/customer_login_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -18,21 +18,22 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _navigateBasedOnLogin() async {
-    await Future.delayed(const Duration(seconds: 2)); // انتظار بسيط (للتصميم)
+    await Future.delayed(const Duration(seconds: 2)); // ⏳ شاشة تحميل قصيرة
 
-    final isLoggedIn = await AuthService.isLoggedIn();
+    final prefs = await SharedPreferences.getInstance();
+    final isLoggedIn = prefs.getBool("isLoggedIn") ?? false;
 
     if (!mounted) return;
 
     if (isLoggedIn) {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
+        MaterialPageRoute(builder: (_) => const DashboardScreen()), // ✅ شاشة العميل
       );
     } else {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const LoginScreen()),
+        MaterialPageRoute(builder: (_) => const CustomerLoginScreen()), // ✅ شاشة تسجيل الدخول للعميل
       );
     }
   }

@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
-  static const String baseUrl = 'http://192.168.8.94:5000/api/Auth';
+static const String baseUrl = 'http://192.168.8.94:5000/api/Auth'; // ✅ عنوان جهازك الحقيقي
 
   static Future<Map<String, dynamic>> login(
       String email, String password) async {
