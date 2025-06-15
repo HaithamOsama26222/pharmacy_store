@@ -44,29 +44,15 @@ class ProductDetailsScreen extends StatelessWidget {
             const Spacer(),
 
             ElevatedButton.icon(
-              icon: const Icon(Icons.add_shopping_cart),
-              label: const Text("إضافة إلى السلة"),
-              onPressed: () {
-                // التأكد إذا المنتج مضاف مسبقًا فقط نزيد الكمية
-                final existingItem = cartItems.firstWhere(
-                  (item) => item.product.productID == product.productID,
-                  orElse: () => CartItem(product: product, quantity: 0),
-                );
-
-                if (existingItem.quantity == 0) {
-                  cartItems.add(CartItem(product: product, quantity: 1));
-                } else {
-                  existingItem.quantity += 1;
-                }
-
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("تمت إضافة المنتج إلى السلة")),
-                );
-              },
-            )
-          ],
-        ),
-      ),
+  icon: const Icon(Icons.add_shopping_cart),
+  label: const Text("إضافة إلى السلة"),
+  onPressed: () {
+    Provider.of<CartProvider>(context, listen: false).addItem(
+      CartItem(product: product, quantity: 1),
     );
-  }
-}
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("تمت إضافة المنتج إلى السلة")),
+    );
+  },
+)

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:pharmacy_store/screens/dashboard_screen.dart';
-import 'package:pharmacy_store/services/customer_auth_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../services/customer_auth_service.dart';
+import 'dashboard_screen.dart';
 
 class CustomerLoginScreen extends StatefulWidget {
   const CustomerLoginScreen({super.key});
@@ -11,92 +11,92 @@ class CustomerLoginScreen extends StatefulWidget {
 }
 
 class _CustomerLoginScreenState extends State<CustomerLoginScreen> {
-  final emailController = TextEditingController();
-  final passwordController = TextEditingController();
-  bool isLoading = false;
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+  bool _isLoading = false;
 
-  void _login() async {
-    final email = emailController.text.trim();
-    final password = passwordController.text;
+  // ✅ تحقق من صيغة البريد الإلكتروني
+  bool _isValidEmail(String email) {
+    final regex = RegExp(r"^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$");
+    return regex.hasMatch(email);
+  }
 
-    if (email.isEmpty || password.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('يرجى إدخال البريد وكلمة المرور')),
-      );
-      return;
-    }
+  Future<void> _login() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
 
-    setState(() => isLoading = true);
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isLoading = true);
 
     final result = await CustomerAuthService.login(email, password);
 
-    setState(() => isLoading = false);
-
-    if (!mounted) return;
+    setState(() => _isLoading = false);
 
     if (result['success']) {
-      // ✅ حفظ بيانات العميل
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool("isLoggedIn", true);
       await prefs.setInt("customerId", result['customerId']);
       await prefs.setString("customerName", result['name']);
 
+      if (!mounted) return;
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const DashboardScreen()),
+        MaterialPageRoute(builder: (_) => const DashboardScreen()),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(result['message'] ?? 'فشل تسجيل الدخول')),
+        SnackBar(content: Text(result['message'] ?? "فشل تسجيل الدخول")),
       );
     }
   }
 
   @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+      appBar: AppBar(title: const Text("تسجيل الدخول")),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Form(
+          key: _formKey,
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.local_pharmacy, size: 100, color: Colors.teal),
-              const SizedBox(height: 20),
-              const Text(
-                "تسجيل الدخول للعميل",
-                style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 24),
-              TextField(
-                controller: emailController,
-                decoration: const InputDecoration(
-                  labelText: 'البريد الإلكتروني',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.email),
-                ),
-              ),
+              const Icon(Icons.person, size: 80),
               const SizedBox(height: 16),
-              TextField(
-                controller: passwordController,
-                obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: 'كلمة المرور',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.lock),
-                ),
+              TextFormField(
+                controller: _emailController,
+                decoration: const InputDecoration(labelText: "البريد الإلكتروني"),
+                keyboardType: TextInputType.emailAddress,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return "يرجى إدخال البريد الإلكتروني";
+                  } else if (!_isValidEmail(value.trim())) {
+                    return "صيغة البريد الإلكتروني غير صحيحة";
+                  }
+                  return null;
+                },
               ),
-              const SizedBox(height: 24),
-              isLoading
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _passwordController,
+                decoration: const InputDecoration(labelText: "كلمة المرور"),
+                obscureText: true,
+                validator: (value) => value == null || value.isEmpty ? "يرجى إدخال كلمة المرور" : null,
+              ),
+              const SizedBox(height: 20),
+              _isLoading
                   ? const CircularProgressIndicator()
-                  : ElevatedButton.icon(
-                      icon: const Icon(Icons.login),
-                      label: const Text("دخول"),
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: const Size(double.infinity, 50),
-                      ),
+                  : ElevatedButton(
                       onPressed: _login,
+                      child: const Text("دخول"),
                     ),
             ],
           ),

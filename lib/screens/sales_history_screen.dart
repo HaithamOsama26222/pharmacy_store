@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
@@ -19,35 +20,40 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
   }
 
   Future<List<Map<String, dynamic>>> fetchSales() async {
-  final int customerId = 1; // ✳️ استبدله بـ ID العميل المسجّل حاليًا
-  final url = Uri.parse('http://10.0.2.2:5176/api/sales/by-customer/$customerId');
-  final response = await http.get(url);
+    final prefs = await SharedPreferences.getInstance();
+    final customerId = prefs.getInt('customerId');
 
-  if (response.statusCode == 200) {
-    final List<dynamic> data = json.decode(response.body);
-    return data.cast<Map<String, dynamic>>();
-  } else {
-    throw Exception('فشل تحميل سجل المبيعات');
+    if (customerId == null) {
+      throw Exception('لا يوجد معرف عميل مسجل');
+    }
+
+    final url = Uri.parse('http://10.0.2.2:5176/api/sales/by-customer/$customerId');
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = json.decode(response.body);
+      return data.cast<Map<String, dynamic>>();
+    } else {
+      throw Exception('فشل تحميل سجل الطلبات');
+    }
   }
-}
-
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text("سجل الطلبات")),
-      body: FutureBuilder(
+      body: FutureBuilder<List<Map<String, dynamic>>>(
         future: _sales,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           } else if (snapshot.hasError) {
-            return Center(child: Text("❌ ${snapshot.error}"));
+            return Center(child: Text("خطأ: ${snapshot.error}"));
           }
 
-          final sales = snapshot.data!;
-          if (sales.isEmpty) {
-            return const Center(child: Text("لا توجد فواتير محفوظة"));
+          final sales = snapshot.data;
+          if (sales == null || sales.isEmpty) {
+            return const Center(child: Text("لا توجد طلبات سابقة."));
           }
 
           return ListView.builder(
@@ -55,8 +61,8 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
             itemBuilder: (context, index) {
               final sale = sales[index];
               return ListTile(
-                title: Text("رقم الطلب: ${sale['saleID']}"),
-                  subtitle: Text("التاريخ: ${sale['saleDate'].split('T')[0]}"),
+                title: Text("طلب رقم: ${sale['saleID']}"),
+                subtitle: Text("التاريخ: ${sale['saleDate'].split('T')[0]}"),
                 trailing: Text("${sale['totalAmount']} ر.س"),
               );
             },

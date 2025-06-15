@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../models/inventory.dart';
-import '../../services/inventory_service.dart';
+import '../models/inventory.dart';
+import '../services/inventory_service.dart';
 
 class AddInventoryDialog extends StatefulWidget {
   final VoidCallback onInventoryAdded;
@@ -14,46 +14,44 @@ class AddInventoryDialog extends StatefulWidget {
 class _AddInventoryDialogState extends State<AddInventoryDialog> {
   final _formKey = GlobalKey<FormState>();
   final _productIdController = TextEditingController();
+  final _productNameController = TextEditingController(); // ✅ جديد
   final _quantityController = TextEditingController();
   final _lowStockController = TextEditingController();
-
   bool _isLoading = false;
-
-  @override
-  void dispose() {
-    _productIdController.dispose();
-    _quantityController.dispose();
-    _lowStockController.dispose();
-    super.dispose();
-  }
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
+    final inventory = Inventory(
+      inventoryID: 0,
+      productID: int.parse(_productIdController.text),
+      productName: _productNameController.text.trim(), // ✅ مضاف فعليًا
+      quantityInStock: int.parse(_quantityController.text),
+      lowStockThreshold: int.parse(_lowStockController.text),
+      lastUpdated: DateTime.now(),
+    );
+
     setState(() => _isLoading = true);
+    final success = await InventoryService.addInventory(inventory);
+    setState(() => _isLoading = false);
 
-    try {
-      final newInventory = Inventory(
-        inventoryID: 0,
-        productID: int.parse(_productIdController.text),
-        productName: '',
-        quantityInStock: int.parse(_quantityController.text),
-        lowStockThreshold: int.parse(_lowStockController.text),
-      );
-
-      await InventoryService.addInventory(newInventory);
-
-      if (!mounted) return; // ✅ لتفادي الخطأ بعد await
+    if (success && mounted) {
       widget.onInventoryAdded();
-      Navigator.of(context).pop();
-    } catch (e) {
-      if (!mounted) return;
+      Navigator.pop(context);
+    } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('فشل في الإضافة: $e')),
+        const SnackBar(content: Text("فشل في إضافة الصنف")),
       );
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  @override
+  void dispose() {
+    _productIdController.dispose();
+    _productNameController.dispose();
+    _quantityController.dispose();
+    _lowStockController.dispose();
+    super.dispose();
   }
 
   @override
@@ -62,46 +60,48 @@ class _AddInventoryDialogState extends State<AddInventoryDialog> {
       title: const Text("إضافة صنف جديد"),
       content: Form(
         key: _formKey,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextFormField(
-              controller: _productIdController,
-              decoration: const InputDecoration(labelText: "معرف المنتج"),
-              keyboardType: TextInputType.number,
-              validator: (value) =>
-                  value == null || value.isEmpty ? "مطلوب" : null,
-            ),
-            TextFormField(
-              controller: _quantityController,
-              decoration: const InputDecoration(labelText: "الكمية المتوفرة"),
-              keyboardType: TextInputType.number,
-              validator: (value) =>
-                  value == null || value.isEmpty ? "مطلوب" : null,
-            ),
-            TextFormField(
-              controller: _lowStockController,
-              decoration: const InputDecoration(labelText: "الحد الأدنى للجرد"),
-              keyboardType: TextInputType.number,
-              validator: (value) =>
-                  value == null || value.isEmpty ? "مطلوب" : null,
-            ),
-          ],
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              TextFormField(
+                controller: _productIdController,
+                decoration: const InputDecoration(labelText: "رقم المنتج"),
+                keyboardType: TextInputType.number,
+                validator: (v) => v == null || v.isEmpty ? "مطلوب" : null,
+              ),
+              const SizedBox(height: 8),
+              TextFormField(
+                controller: _productNameController,
+                decoration: const InputDecoration(labelText: "اسم المنتج"), // ✅ جديد
+                validator: (v) => v == null || v.trim().isEmpty ? "مطلوب" : null,
+              ),
+              const SizedBox(height: 8),
+              TextFormField(
+                controller: _quantityController,
+                decoration: const InputDecoration(labelText: "الكمية"),
+                keyboardType: TextInputType.number,
+                validator: (v) => v == null || v.isEmpty ? "مطلوب" : null,
+              ),
+              const SizedBox(height: 8),
+              TextFormField(
+                controller: _lowStockController,
+                decoration: const InputDecoration(labelText: "حد التنبيه الأدنى"),
+                keyboardType: TextInputType.number,
+                validator: (v) => v == null || v.isEmpty ? "مطلوب" : null,
+              ),
+            ],
+          ),
         ),
       ),
       actions: [
         TextButton(
-          onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
+          onPressed: () => Navigator.pop(context),
           child: const Text("إلغاء"),
         ),
         ElevatedButton(
           onPressed: _isLoading ? null : _submit,
           child: _isLoading
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
+              ? const CircularProgressIndicator()
               : const Text("إضافة"),
         ),
       ],

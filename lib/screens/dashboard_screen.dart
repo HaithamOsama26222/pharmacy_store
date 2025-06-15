@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import '../models/product.dart';
-import '../services/product_service.dart';
-import 'product_details_screen.dart';
-import 'sales_history_screen.dart'; // ✅ تم الاستيراد هنا
-import 'inventory_screen.dart'; // ✅ استيراد شاشة الجرد
+import 'package:pharmacy_store/models/product.dart';
+import 'package:pharmacy_store/services/product_service.dart';
+import 'package:pharmacy_store/screens/product_details_screen.dart';
+import 'package:pharmacy_store/screens/sales_history_screen.dart';
+import 'package:pharmacy_store/screens/inventory_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -14,41 +14,50 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   late Future<List<Product>> _productsFuture;
+  List<Product> _allProducts = [];
+  List<Product> _filteredProducts = [];
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _productsFuture = ProductService().fetchProducts();
+    _searchController.addListener(_onSearchChanged);
+  }
+
+  void _onSearchChanged() {
+    final query = _searchController.text.toLowerCase();
+    setState(() {
+      _filteredProducts = _allProducts
+          .where((p) => p.name.toLowerCase().contains(query))
+          .toList();
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("منتجات المتجر"),
+        title: const Text('المتجر'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.inventory_2),
-            tooltip: "عرض الجرد",
+            icon: const Icon(Icons.inventory),
             onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const InventoryScreen(),
-                ),
-              );
+              Navigator.push(context,
+                  MaterialPageRoute(builder: (_) => const InventoryScreen()));
             },
           ),
           IconButton(
             icon: const Icon(Icons.history),
-            tooltip: "سجل الطلبات",
             onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const SalesHistoryScreen(),
-                ),
-              );
+              Navigator.push(context,
+                  MaterialPageRoute(builder: (_) => const SalesHistoryScreen()));
             },
           ),
         ],
@@ -61,58 +70,82 @@ class _DashboardScreenState extends State<DashboardScreen> {
           } else if (snapshot.hasError) {
             return Center(child: Text("حدث خطأ: ${snapshot.error}"));
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text("لا توجد منتجات لعرضها"));
+            return const Center(child: Text("لا توجد منتجات"));
           }
 
-          final products = snapshot.data!;
-          return Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: GridView.builder(
-              itemCount: products.length,
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 10,
-                mainAxisSpacing: 10,
-                childAspectRatio: 0.8,
+          _allProducts = snapshot.data!;
+          _filteredProducts = _searchController.text.isEmpty
+              ? _allProducts
+              : _filteredProducts;
+
+          return Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: TextField(
+                  controller: _searchController,
+                  decoration: InputDecoration(
+                    hintText: "ابحث عن منتج...",
+                    prefixIcon: const Icon(Icons.search),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
               ),
-              itemBuilder: (context, index) {
-                final product = products[index];
-                return GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => ProductDetailsScreen(product: product),
+              Expanded(
+                child: GridView.builder(
+                  padding: const EdgeInsets.all(10),
+                  itemCount: _filteredProducts.length,
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 12,
+                    crossAxisSpacing: 12,
+                    childAspectRatio: 3 / 4,
+                  ),
+                  itemBuilder: (context, index) {
+                    final product = _filteredProducts[index];
+                    return GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                ProductDetailsScreen(product: product),
+                          ),
+                        );
+                      },
+                      child: Card(
+                        elevation: 4,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.medication, size: 60),
+                              const SizedBox(height: 10),
+                              Text(
+                                product.name,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text("السعر: ${product.salePrice} ر.س"),
+                              Text("المتوفر: ${product.stockQuantity}"),
+                            ],
+                          ),
+                        ),
                       ),
                     );
                   },
-                  child: Card(
-                    elevation: 4,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          const Icon(Icons.medication,
-                              size: 40, color: Colors.blue),
-                          Text(
-                            product.productName ?? "اسم غير معروف",
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                            textAlign: TextAlign.center,
-                          ),
-                          Text(
-                              "السعر: ${product.salePrice?.toStringAsFixed(2) ?? '-'} ر.س"),
-                          Text("الكمية: ${product.stockQuantity ?? 0}"),
-                        ],
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
+                ),
+              ),
+            ],
           );
         },
       ),

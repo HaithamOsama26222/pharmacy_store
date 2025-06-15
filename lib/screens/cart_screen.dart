@@ -26,47 +26,63 @@ class _CartScreenState extends State<CartScreen> {
     });
   }
 
-  Future<void> submitSale() async {
-    logger.i("📦 بدأ إرسال الطلب...");
+  Future<void> _submitSale() async {
+  if (selectedPaymentMethod.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("يرجى اختيار وسيلة الدفع")),
+    );
+    return;
+  }
 
-    final sale =
-        SaleRequest(widget.cartItems, paymentMethod: selectedPaymentMethod);
-    final url = Uri.parse('http://10.0.2.2:5176/api/sales');
+  final prefs = await SharedPreferences.getInstance();
+  final customerId = prefs.getInt('customerId');
 
-    try {
-      final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode(sale.toJson()),
-      );
+  if (customerId == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("لم يتم العثور على هوية العميل")),
+    );
+    return;
+  }
 
-      if (!mounted) return;
+  final sale = SaleRequest(
+    items: cartItems,
+    paymentMethod: selectedPaymentMethod,
+    customerId: customerId, // ✅ أضفنا معرف العميل هنا
+  );
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final orderId = data['saleID'] ?? 0;
+  final url = Uri.parse('http://10.0.2.2:5176/api/sales');
 
-        logger.i("✅ تم إرسال الطلب بنجاح. رقم الطلب: $orderId");
+  final response = await http.post(
+    url,
+    headers: {'Content-Type': 'application/json'},
+    body: jsonEncode(sale.toJson()),
+  );
 
-        setState(() {
-          widget.cartItems.clear();
-        });
+  if (response.statusCode == 200) {
+    final data = jsonDecode(response.body);
+    final orderId = data['saleID'];
 
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (_) => OrderSuccessScreen(
-              orderId: orderId,
-              paymentMethod: selectedPaymentMethod,
-            ),
-          ),
-        );
-      } else {
-        logger.e("❌ فشل إرسال الطلب: ${response.statusCode}");
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("❌ فشل: ${response.statusCode}")),
-        );
-      }
+    cartItems.clear(); // إذا لم تستخدم provider بعد
+    if (!mounted) return;
+   Navigator.pushReplacement(
+  context,
+  MaterialPageRoute(
+    builder: (_) => OrderSuccessScreen(
+      orderId: orderId,
+      paymentMethod: selectedPaymentMethod,
+      purchasedItems: List.from(cartItems), // ✅ تمرير المنتجات
+    ),
+  ),
+);
+
+    );
+  } else {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("فشل في تنفيذ الطلب")),
+    );
+  }
+}
+
     } catch (e) {
       if (!mounted) return;
       logger.e("⚠️ خطأ أثناء الإرسال: $e");

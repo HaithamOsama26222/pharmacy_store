@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pharmacy_store/screens/home_screen.dart';
-import 'package:pharmacy_store/services/auth_service.dart'; // تأكد أن اسم الملف auth_service.dart
+import 'package:pharmacy_store/services/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -10,8 +10,8 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final TextEditingController emailController = TextEditingController();
-  final TextEditingController passwordController = TextEditingController();
+  final emailController = TextEditingController();
+  final passwordController = TextEditingController();
   bool isLoading = false;
 
   void _login() async {
@@ -26,9 +26,7 @@ class _LoginScreenState extends State<LoginScreen> {
     }
 
     setState(() => isLoading = true);
-
     final result = await AuthService.login(email, password);
-
     setState(() => isLoading = false);
 
     if (!mounted) return;
@@ -40,7 +38,10 @@ class _LoginScreenState extends State<LoginScreen> {
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(result['message'] ?? 'فشل تسجيل الدخول')),
+        SnackBar(
+          content: Text(result['message'] ?? 'فشل تسجيل الدخول'),
+          backgroundColor: Colors.red,
+        ),
       );
     }
   }
@@ -51,16 +52,13 @@ class _LoginScreenState extends State<LoginScreen> {
       backgroundColor: Colors.grey[100],
       body: Center(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 32),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Icon(Icons.local_pharmacy, size: 100, color: Colors.teal),
               const SizedBox(height: 20),
-              const Text(
-                "تسجيل الدخول للعميل",
-                style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
-              ),
+              const Text("تسجيل الدخول للعميل", style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
               const SizedBox(height: 24),
               TextField(
                 controller: emailController,

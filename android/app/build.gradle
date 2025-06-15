@@ -1,60 +1,9 @@
-import java.util.Properties
-import java.io.FileInputStream
-plugins {
-    id "com.android.application"
-    id "kotlin-android"
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
-    id "dev.flutter.flutter-gradle-plugin"
-}
-
-// ✅ تحميل معلومات التوقيع من key.properties
-def keystoreProperties = new Properties()
-def keystorePropertiesFile = rootProject.file("key.properties")
-if (keystorePropertiesFile.exists()) {
-    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
-    println("✅ key.properties loaded successfully")
-    println("➡️ storeFile = " + keystoreProperties['storeFile'])
-} else {
-    println("❌ key.properties not found!")
-}
-
 android {
-    namespace = "com.haitham.pharmacy_store"
-    compileSdk = 34
-    ndkVersion = "25.2.9519653"
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
-    }
-
     defaultConfig {
-        applicationId = "com.haitham.pharmacy_store"
-        minSdk = 21
-        targetSdk = 34
-        versionCode = 3               // ✅ تم تحديثه لتفادي رسالة التكرار
-        versionName = "1.0.2"         // ✅ الإصدار الجديد
+        applicationId "com.example.pharmacy_store"
+        minSdk 21
+        targetSdk 33
+        versionCode flutterVersionCode.toInteger()
+        versionName flutterVersionName
     }
-
-    signingConfigs {
-        release {
-            keyAlias keystoreProperties['keyAlias']
-            keyPassword keystoreProperties['keyPassword']
-            storeFile file(keystoreProperties['storeFile'])
-            storePassword keystoreProperties['storePassword']
-        }
-    }
-
-    buildTypes {
-        release {
-            signingConfig signingConfigs.release
-            minifyEnabled false
-            shrinkResources false
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-        }
-    }
-}
-
-flutter {
-    source = "../.."
 }

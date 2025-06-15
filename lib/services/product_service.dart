@@ -1,12 +1,10 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../models/product.dart';
+import 'package:pharmacy_store/models/product.dart';
+import 'package:pharmacy_store/config.dart';
 
 class ProductService {
   Future<List<Product>> fetchProducts() async {
-    // عنوان السيرفر عند تشغيل التطبيق على هاتف حقيقي
-final String baseUrl = 'http://192.168.8.94:5176/api';
-
     final response = await http.get(Uri.parse('$baseUrl/products'));
 
     if (response.statusCode == 200) {

@@ -1,9 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:pharmacy_store/screens/splash_screen.dart'; // ✅ استيراد SplashScreen
+import 'package:provider/provider.dart';
+import 'providers/cart_provider.dart';
+import 'screens/splash_screen.dart';
 
 void main() {
-  runApp(const PharmacyStoreApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => CartProvider()),
+      ],
+      child: const PharmacyStoreApp(),
+    ),
+  );
 }
+
 
 class PharmacyStoreApp extends StatelessWidget {
   const PharmacyStoreApp({super.key});

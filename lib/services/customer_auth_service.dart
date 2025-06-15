@@ -1,17 +1,15 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:pharmacy_store/config.dart';
 
 class CustomerAuthService {
-static const String baseUrl = 'http://10.0.2.2:5000/api/Auth';
-
-  static Future<Map<String, dynamic>> login(
-      String email, String password) async {
+  static Future<Map<String, dynamic>> login(String email, String password) async {
     try {
       final response = await http.post(
-        Uri.parse(baseUrl),
+        Uri.parse('$baseUrl/Auth/login'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
-          'email_Customer': email, // ✅ مطابق لاسم الحقل في DTO
+          'email_Customer': email,
           'password_Customer': password,
         }),
       );

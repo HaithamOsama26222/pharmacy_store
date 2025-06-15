@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../models/inventory.dart';
-import '../../services/inventory_service.dart';
-import '../../widgets/add_inventory_dialog.dart';
+import '../models/inventory.dart';
+import '../services/inventory_service.dart';
+import '../widgets/add_inventory_dialog.dart';
+import '../widgets/edit_inventory_dialog.dart';
 
 class InventoryAdminScreen extends StatefulWidget {
   const InventoryAdminScreen({super.key});
@@ -20,10 +21,12 @@ class _InventoryAdminScreenState extends State<InventoryAdminScreen> {
   }
 
   void _refreshInventory() {
-    _inventoryFuture = InventoryService.fetchInventories();
+    setState(() {
+      _inventoryFuture = InventoryService.fetchInventories();
+    });
   }
 
-  Future<void> _confirmDelete(int id) async {
+  Future<void> _confirmDelete(int inventoryId) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -31,11 +34,11 @@ class _InventoryAdminScreenState extends State<InventoryAdminScreen> {
         content: const Text("هل أنت متأكد من حذف هذا الصنف؟"),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
+            onPressed: () => Navigator.pop(context, false),
             child: const Text("إلغاء"),
           ),
           ElevatedButton(
-            onPressed: () => Navigator.of(context).pop(true),
+            onPressed: () => Navigator.pop(context, true),
             child: const Text("حذف"),
           ),
         ],
@@ -43,23 +46,11 @@ class _InventoryAdminScreenState extends State<InventoryAdminScreen> {
     );
 
     if (confirmed == true) {
-      try {
-        await InventoryService.deleteInventory(id);
-
-        if (!mounted) return; // ✅ حل التحذير الأول
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("تم الحذف بنجاح")),
-        );
-
-        setState(_refreshInventory);
-      } catch (e) {
-        if (!mounted) return; // ✅ حل التحذير الثاني
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("فشل في الحذف: $e")),
-        );
-      }
+      await InventoryService.deleteInventory(inventoryId);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("تم حذف الصنف")),
+      );
+      _refreshInventory();
     }
   }
 
@@ -67,22 +58,32 @@ class _InventoryAdminScreenState extends State<InventoryAdminScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text("إدارة الجرد")),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          showDialog(
+            context: context,
+            builder: (_) => AddInventoryDialog(onInventoryAdded: _refreshInventory),
+          );
+        },
+        child: const Icon(Icons.add),
+      ),
       body: FutureBuilder<List<Inventory>>(
         future: _inventoryFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           } else if (snapshot.hasError) {
-            return Center(child: Text("حدث خطأ: ${snapshot.error}"));
+            return Center(child: Text("خطأ: ${snapshot.error}"));
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text("لا توجد بيانات جرد"));
+            return const Center(child: Text("لا توجد بيانات."));
           }
 
-          final inventories = snapshot.data!;
+          final items = snapshot.data!;
           return ListView.builder(
-            itemCount: inventories.length,
+            itemCount: items.length,
             itemBuilder: (context, index) {
-              final item = inventories[index];
+              final item = items[index];
+
               return ListTile(
                 title: Text(item.productName),
                 subtitle: Text("الكمية: ${item.quantityInStock}"),
@@ -90,30 +91,27 @@ class _InventoryAdminScreenState extends State<InventoryAdminScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.delete),
-                      color: Colors.red,
+                      icon: const Icon(Icons.edit, color: Colors.blue),
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (_) => EditInventoryDialog(
+                            inventory: item,
+                            onInventoryUpdated: _refreshInventory,
+                          ),
+                        );
+                      },
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.delete, color: Colors.red),
                       onPressed: () => _confirmDelete(item.inventoryID),
                     ),
-                    // يمكنك لاحقًا إضافة زر تعديل هنا أيضًا
                   ],
                 ),
               );
             },
           );
         },
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          showDialog(
-            context: context,
-            builder: (context) => AddInventoryDialog(
-              onInventoryAdded: () {
-                setState(_refreshInventory);
-              },
-            ),
-          );
-        },
-        child: const Icon(Icons.add),
       ),
     );
   }
