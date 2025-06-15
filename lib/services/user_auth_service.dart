@@ -2,15 +2,15 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:pharmacy_store/config.dart';
 
-class CustomerAuthService {
-  static Future<Map<String, dynamic>> login(String email, String password) async {
+class UserAuthService {
+  static Future<Map<String, dynamic>> login(String username, String password) async {
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl/CustomerAuth/login'),
+        Uri.parse('$baseUrl/UserAuth/login'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
-          'email_Customer': email,
-          'password_Customer': password,
+          'username': username,
+          'password': password,
         }),
       );
 
@@ -18,8 +18,9 @@ class CustomerAuthService {
         final data = jsonDecode(response.body);
         return {
           'success': true,
-          'customerId': data['customerId'],
-          'name': data['name'],
+          'userId': data['userId'],
+          'username': data['username'],
+          'role': data['role'],
         };
       } else {
         final error = jsonDecode(response.body);

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pharmacy_store/screens/admin_dashboard_screen.dart';
-import 'package:pharmacy_store/services/admin_auth_service.dart';
+import 'package:pharmacy_store/services/user_auth_service.dart';
 
 class AdminLoginScreen extends StatefulWidget {
   const AdminLoginScreen({super.key});
@@ -10,15 +10,12 @@ class AdminLoginScreen extends StatefulWidget {
 }
 
 class _AdminLoginScreenState extends State<AdminLoginScreen> {
-  final TextEditingController usernameController = TextEditingController();
-  final TextEditingController passwordController = TextEditingController();
+  final usernameController = TextEditingController();
+  final passwordController = TextEditingController();
   bool isLoading = false;
 
   void _login() async {
-    final username = usernameController.text.trim();
-    final password = passwordController.text;
-
-    if (username.isEmpty || password.isEmpty) {
+    if (usernameController.text.isEmpty || passwordController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('يرجى إدخال اسم المستخدم وكلمة المرور')),
       );
@@ -26,9 +23,10 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
     }
 
     setState(() => isLoading = true);
-
-    final result = await AdminAuthService.login(username, password);
-
+    final result = await UserAuthService.login(
+      usernameController.text.trim(),
+      passwordController.text,
+    );
     setState(() => isLoading = false);
 
     if (!mounted) return;
@@ -36,7 +34,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
     if (result['success']) {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const AdminDashboardScreen()),
+        MaterialPageRoute(builder: (_) => const AdminDashboardScreen()),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -57,10 +55,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
             children: [
               const Icon(Icons.admin_panel_settings, size: 100, color: Colors.teal),
               const SizedBox(height: 20),
-              const Text(
-                "تسجيل دخول المسؤول",
-                style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
-              ),
+              const Text("تسجيل دخول المسؤول", style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
               const SizedBox(height: 24),
               TextField(
                 controller: usernameController,
@@ -86,9 +81,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                   : ElevatedButton.icon(
                       icon: const Icon(Icons.login),
                       label: const Text("دخول"),
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: const Size(double.infinity, 50),
-                      ),
+                      style: ElevatedButton.styleFrom(minimumSize: const Size(double.infinity, 50)),
                       onPressed: _login,
                     ),
             ],
